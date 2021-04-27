@@ -31,7 +31,7 @@ export interface Collection<T> extends Type<T> {
 export type Obj<T> = { [key: string]: T };
 
 export type Field = [string, Type<any>]; // (name, type)
-export type Fields = { readonly [ordinal: number]: Field };
+export type Fields = { readonly [ordinal: string]: Field };
 
 export interface Branches {
 	readonly [ordinal: number]: Type<any>;
@@ -321,7 +321,7 @@ export function TypedMap<V>(keyT: Type<number | string>, valueT: Type<V>): Colle
 		},
 
 		dec(buf: ReadBuffer): Obj<V> {
-			const res = {};
+			const res: { [key: string]: V } = {};
 			for (let n = getMapHeader(buf); n > 0; --n) {
 				const k = keyT.dec(buf);
 				res[k] = valueT.dec(buf);
@@ -347,7 +347,7 @@ export function structEncoder(fields: Fields): EncodeFunc<any> {
 
 export function structDecoder(fields: Fields): DecodeFunc<any> {
 	return (buf: ReadBuffer): any => {
-		const res = {};
+		const res: { [key: string]: any } = {};
 		for (let n = getMapHeader(buf); n > 0; --n) {
 			const f = fields[Int.dec(buf)];
 			if (f) {

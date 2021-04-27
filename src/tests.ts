@@ -1,11 +1,11 @@
-import {test} from "testsome";
-import {Tag, posFixintTag, negFixintTag, fixstrTag, fixarrayTag, fixmapTag} from "./tags";
-import {Nil, Bool, Int, Uint, Float, Bytes, Str, Arr, Map, Raw, Time, Any, Struct, Union} from "./types";
-import {encode, decode} from "./index";
+import { Tag, posFixintTag, negFixintTag, fixstrTag, fixarrayTag, fixmapTag } from "./tags.ts";
+import { Nil, Bool, Int, Uint, Float, Bytes, Str, Arr, Map, Raw, Time, Any, Struct, Union } from "./types.ts";
+import { encode, decode } from "./index.ts";
+import { assertEquals } from "https://deno.land/std@0.95.0/testing/asserts.ts";
 
 
 
-test("encode", t => {
+Deno.test("encode", () => {
 	const tests = [
 		// nil
 		{
@@ -212,7 +212,7 @@ test("encode", t => {
 		},
 		// map
 		{
-			val: {a: 7, b: 13},
+			val: { a: 7, b: 13 },
 			typ: Map,
 			bin: [fixmapTag(2), fixstrTag(1), 0x61, posFixintTag(7), fixstrTag(1), 0x62, posFixintTag(13)],
 		},
@@ -332,15 +332,15 @@ test("encode", t => {
 		},
 	];
 
-	for(let i = 0; i < tests.length; ++i) {
+	for (let i = 0; i < tests.length; ++i) {
 		const test = tests[i];
 		try {
 			const bin = encode(test.val, test.typ);
 			const expected = new Uint8Array(test.bin);
-			if(!bufEqual(bin, expected)) {
+			if (!bufEqual(bin, expected)) {
 				t.error(`unexpected encoding at ${i} for '${test.val}': ${fmtBuf(bin)}, expected ${fmtBuf(expected)}`);
 			}
-		} catch(e) {
+		} catch (e) {
 			t.error(`unexpected encoding error at ${i} for '${test.val}': ${e}`);
 		}
 	}
@@ -602,19 +602,19 @@ test("decode", t => {
 		{
 			bin: [fixmapTag(1), fixstrTag(1), 0x61, posFixintTag(7)],
 			typ: Map,
-			val: {"a": 7},
+			val: { "a": 7 },
 			eq: objectEqual,
 		},
 		{
 			bin: [Tag.Map16, 0x00, 0x01, fixstrTag(1), 0x61, posFixintTag(7)],
 			typ: Map,
-			val: {"a": 7},
+			val: { "a": 7 },
 			eq: objectEqual,
 		},
 		{
 			bin: [Tag.Map32, 0x00, 0x00, 0x00, 0x01, fixstrTag(3), 0x69, 0x6e, 0x66, fixstrTag(3), 0xe2, 0x88, 0x9e],
 			typ: Map,
-			val: {"inf": "∞"},
+			val: { "inf": "∞" },
 			eq: objectEqual,
 		},
 		// raw
@@ -733,37 +733,37 @@ test("decode", t => {
 			eq: (x, y) => bufEqual(new Uint8Array(x), y),
 		},
 		{
-			bin:  [Tag.Ext32, 0x0, 0x0, 0x0, 0x05, 0x0d, 0x30, 0x30, 0x30, 0x30, 0x30],
+			bin: [Tag.Ext32, 0x0, 0x0, 0x0, 0x05, 0x0d, 0x30, 0x30, 0x30, 0x30, 0x30],
 			typ: Raw,
 			val: new Uint8Array([Tag.Ext32, 0x0, 0x0, 0x0, 0x05, 0x0d, 0x30, 0x30, 0x30, 0x30, 0x30]),
 			eq: (x, y) => bufEqual(new Uint8Array(x), y),
 		},
 		{
-			bin:  [posFixintTag(7)],
+			bin: [posFixintTag(7)],
 			typ: Raw,
 			val: new Uint8Array([posFixintTag(7)]),
 			eq: (x, y) => bufEqual(new Uint8Array(x), y),
 		},
 		{
-			bin:  [negFixintTag(-7)],
+			bin: [negFixintTag(-7)],
 			typ: Raw,
 			val: new Uint8Array([negFixintTag(-7)]),
 			eq: (x, y) => bufEqual(new Uint8Array(x), y),
 		},
 		{
-			bin:  [fixstrTag(3), 0x30, 0x30, 0x30],
+			bin: [fixstrTag(3), 0x30, 0x30, 0x30],
 			typ: Raw,
 			val: new Uint8Array([fixstrTag(3), 0x30, 0x30, 0x30]),
 			eq: (x, y) => bufEqual(new Uint8Array(x), y),
 		},
 		{
-			bin:  [fixarrayTag(3), Tag.Nil, Tag.Nil, Tag.Nil],
+			bin: [fixarrayTag(3), Tag.Nil, Tag.Nil, Tag.Nil],
 			typ: Raw,
 			val: new Uint8Array([fixarrayTag(3), Tag.Nil, Tag.Nil, Tag.Nil]),
 			eq: (x, y) => bufEqual(new Uint8Array(x), y),
 		},
 		{
-			bin:  [fixmapTag(3), Tag.Nil, Tag.Nil, Tag.Nil, Tag.Nil, Tag.Nil, Tag.Nil],
+			bin: [fixmapTag(3), Tag.Nil, Tag.Nil, Tag.Nil, Tag.Nil, Tag.Nil, Tag.Nil],
 			typ: Raw,
 			val: new Uint8Array([fixmapTag(3), Tag.Nil, Tag.Nil, Tag.Nil, Tag.Nil, Tag.Nil, Tag.Nil]),
 			eq: (x, y) => bufEqual(new Uint8Array(x), y),
@@ -922,19 +922,19 @@ test("decode", t => {
 		{
 			bin: [fixmapTag(1), fixstrTag(1), 0x61, negFixintTag(-12)],
 			typ: Any,
-			val: {"a": -12},
+			val: { "a": -12 },
 			eq: objectEqual,
 		},
 		{
 			bin: [Tag.Map16, 0x00, 0x01, fixstrTag(2), 0xc3, 0xa4, posFixintTag(11)],
 			typ: Any,
-			val: {"ä": 11},
+			val: { "ä": 11 },
 			eq: objectEqual,
 		},
 		{
 			bin: [Tag.Map32, 0x00, 0x00, 0x00, 0x01, fixstrTag(2), 0x31, 0x30, fixstrTag(1), 0x32],
 			typ: Any,
-			val: {"10": "2"},
+			val: { "10": "2" },
 			eq: objectEqual,
 		},
 		{
@@ -989,16 +989,16 @@ test("decode", t => {
 		},
 	];
 
-	for(let i = 0; i < tests.length; ++i) {
+	for (let i = 0; i < tests.length; ++i) {
 		const test = tests[i];
 		const bin = new Uint8Array(test.bin);
 		try {
 			const val = decode(bin, test.typ);
 			const eq = opEqual(test);
-			if(!eq(val, test.val)) {
+			if (!eq(val, test.val)) {
 				t.error(`unexpected decoding at ${i} for '${fmtBuf(bin)}': ${val}, expected ${test.val}`);
 			}
-		} catch(e) {
+		} catch (e) {
 			t.error(`unexpected decoding error at ${i} for '${fmtBuf(bin)}': ${e}`);
 		}
 	}
@@ -1008,7 +1008,7 @@ test("decode", t => {
 
 function repeat<T>(x: T, n: number): T[] {
 	let res = [];
-	for(let i = 0; i < n; ++i) {
+	for (let i = 0; i < n; ++i) {
 		res.push(x);
 	}
 	return res;
@@ -1016,19 +1016,19 @@ function repeat<T>(x: T, n: number): T[] {
 
 function repeats(s: string, n: number): string {
 	let res = "";
-	for(let i = 0; i < n; ++i) {
+	for (let i = 0; i < n; ++i) {
 		res += s;
 	}
 	return res;
 }
 
 function fmtBuf(buf: Uint8Array): string {
-	const list = Array.prototype.map.call(buf, x => `0${ x.toString(16)}`.slice(-2)).join(",");
+	const list = Array.prototype.map.call(buf, x => `0${x.toString(16)}`.slice(-2)).join(",");
 	return `[${list}]`;
 }
 
 function opEqual(test: any): (x: any, y: any) => boolean {
-	if(test.eq) {
+	if (test.eq) {
 		return test.eq;
 	}
 	return (x, y) => x === y;
@@ -1040,13 +1040,13 @@ function arrayEqual(x: any[], y: any[]): boolean {
 }
 
 function objectEqual(x: any, y: any): boolean {
-	for(const p in x) {
-		if(!(p in y) || x[p] !== y[p]) {
+	for (const p in x) {
+		if (!(p in y) || x[p] !== y[p]) {
 			return false;
 		}
 	}
-	for(const p in y) {
-		if(!(p in x) || x[p] !== y[p]) {
+	for (const p in y) {
+		if (!(p in x) || x[p] !== y[p]) {
 			return false;
 		}
 	}
@@ -1054,11 +1054,11 @@ function objectEqual(x: any, y: any): boolean {
 }
 
 function bufEqual(left: Uint8Array, right: Uint8Array): boolean {
-	if(left.length !== right.length) {
+	if (left.length !== right.length) {
 		return false;
 	}
-	for(let i = 0; i < left.length; ++i) {
-		if(left[i] !== right[i]) {
+	for (let i = 0; i < left.length; ++i) {
+		if (left[i] !== right[i]) {
 			return false;
 		}
 	}
