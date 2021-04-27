@@ -1,17 +1,17 @@
-import {typeError} from "./error";
+import { typeError } from "./error.ts";
 import {
 	WriteBuffer, ReadBuffer, createWriteBuffer,
 	putBlob, getBlob,
 	putArrHeader, getArrHeader,
 	putMapHeader, getMapHeader,
 	getRaw,
-} from "./buffer";
+} from "./buffer.ts";
 import {
 	Tag,
 	posFixintTag, isPosFixintTag, readPosFixint,
 	negFixintTag, isNegFixintTag, readNegFixint,
 	fixstrTag, isFixstrTag, isFixarrayTag, isFixmapTag,
-} from "./tags";
+} from "./tags.ts";
 
 
 
@@ -28,10 +28,10 @@ export interface Collection<T> extends Type<T> {
 	decHeader(buf: ReadBuffer, expect?: number): number;
 }
 
-export type Obj<T> = {[key: string]: T};
+export type Obj<T> = { [key: string]: T };
 
 export type Field = [string, Type<any>]; // (name, type)
-export type Fields = {readonly [ordinal: number]: Field};
+export type Fields = { readonly [ordinal: number]: Field };
 
 export interface Branches {
 	readonly [ordinal: number]: Type<any>;
@@ -58,7 +58,7 @@ export const Nil: Type<null> = {
 
 	dec(buf: ReadBuffer): null {
 		const tag = buf.getUi8();
-		if(tag !== Tag.Nil) {
+		if (tag !== Tag.Nil) {
 			typeError(tag, "nil");
 		}
 		return null;
@@ -73,14 +73,14 @@ export const Bool: Type<boolean> = {
 
 	dec(buf: ReadBuffer): boolean {
 		const tag = buf.getUi8();
-		switch(tag) {
-		case Tag.Nil:
-		case Tag.False:
-			return false;
-		case Tag.True:
-			return true;
-		default:
-			typeError(tag, "bool");
+		switch (tag) {
+			case Tag.Nil:
+			case Tag.False:
+				return false;
+			case Tag.True:
+				return true;
+			default:
+				typeError(tag, "bool");
 		}
 	},
 };
@@ -88,19 +88,19 @@ export const Bool: Type<boolean> = {
 
 export const Int: Type<number> = {
 	enc(buf: WriteBuffer, v: number): void {
-		if(-128 <= v && v <= 127) {
-			if(v >= 0) {
+		if (-128 <= v && v <= 127) {
+			if (v >= 0) {
 				buf.putUi8(posFixintTag(v));
-			} else if(v > -32) {
+			} else if (v > -32) {
 				buf.putUi8(negFixintTag(v));
 			} else {
 				buf.putUi8(Tag.Int8);
 				buf.putUi8(v);
 			}
-		} else if(-32768 <= v && v <= 32767) {
+		} else if (-32768 <= v && v <= 32767) {
 			buf.putI8(Tag.Int16);
 			buf.putI16(v);
-		} else if(-2147483648 <= v && v <= 2147483647) {
+		} else if (-2147483648 <= v && v <= 2147483647) {
 			buf.putI8(Tag.Int32);
 			buf.putI32(v);
 		} else {
@@ -111,38 +111,38 @@ export const Int: Type<number> = {
 
 	dec(buf: ReadBuffer): number {
 		const tag = buf.getUi8();
-		if(isPosFixintTag(tag)) {
+		if (isPosFixintTag(tag)) {
 			return readPosFixint(tag);
-		} else if(isNegFixintTag(tag)) {
+		} else if (isNegFixintTag(tag)) {
 			return readNegFixint(tag);
 		}
 
-		switch(tag) {
-		case Tag.Nil:
-			return 0;
+		switch (tag) {
+			case Tag.Nil:
+				return 0;
 
-		// signed int types
-		case Tag.Int8:
-			return buf.getI8();
-		case Tag.Int16:
-			return buf.getI16();
-		case Tag.Int32:
-			return buf.getI32();
-		case Tag.Int64:
-			return buf.getI64();
+			// signed int types
+			case Tag.Int8:
+				return buf.getI8();
+			case Tag.Int16:
+				return buf.getI16();
+			case Tag.Int32:
+				return buf.getI32();
+			case Tag.Int64:
+				return buf.getI64();
 
-		// unsigned int types
-		case Tag.Uint8:
-			return buf.getUi8();
-		case Tag.Uint16:
-			return buf.getUi16();
-		case Tag.Uint32:
-			return buf.getUi32();
-		case Tag.Uint64:
-			return buf.getUi64();
+			// unsigned int types
+			case Tag.Uint8:
+				return buf.getUi8();
+			case Tag.Uint16:
+				return buf.getUi16();
+			case Tag.Uint32:
+				return buf.getUi32();
+			case Tag.Uint64:
+				return buf.getUi64();
 
-		default:
-			typeError(tag, "int");
+			default:
+				typeError(tag, "int");
 		}
 	},
 };
@@ -150,17 +150,17 @@ export const Int: Type<number> = {
 
 export const Uint: Type<number> = {
 	enc(buf: WriteBuffer, v: number): void {
-		if(v < 0) {
+		if (v < 0) {
 			throw new Error(`not an uint: ${v}`);
-		} else if(v <= 127) {
+		} else if (v <= 127) {
 			buf.putUi8(posFixintTag(v));
-		} else if(v <= 255) {
+		} else if (v <= 255) {
 			buf.putUi8(Tag.Uint8);
 			buf.putUi8(v);
-		} else if(v <= 65535) {
+		} else if (v <= 65535) {
 			buf.putUi8(Tag.Uint16);
 			buf.putUi16(v);
-		} else if(v <= 4294967295) {
+		} else if (v <= 4294967295) {
 			buf.putUi8(Tag.Uint32);
 			buf.putUi32(v);
 		} else {
@@ -171,7 +171,7 @@ export const Uint: Type<number> = {
 
 	dec(buf: ReadBuffer): number {
 		const v = Int.dec(buf);
-		if(v < 0) {
+		if (v < 0) {
 			throw new RangeError("uint underflow");
 		}
 		return v;
@@ -187,15 +187,15 @@ export const Float: Type<number> = {
 
 	dec(buf: ReadBuffer): number {
 		const tag = buf.getUi8();
-		switch(tag) {
-		case Tag.Nil:
-			return 0;
-		case Tag.Float32:
-			return buf.getF32();
-		case Tag.Float64:
-			return buf.getF64();
-		default:
-			typeError(tag, "float");
+		switch (tag) {
+			case Tag.Nil:
+				return 0;
+			case Tag.Float32:
+				return buf.getF32();
+			case Tag.Float64:
+				return buf.getF64();
+			default:
+				typeError(tag, "float");
 		}
 	},
 };
@@ -213,7 +213,7 @@ export const Bytes: Type<ArrayBuffer> = {
 export const Str: Type<string> = {
 	enc(buf: WriteBuffer, v: string): void {
 		const utf8 = toUTF8(v);
-		if(utf8.byteLength < 32) {
+		if (utf8.byteLength < 32) {
 			buf.putUi8(fixstrTag(utf8.byteLength));
 			buf.put(utf8);
 		} else {
@@ -247,34 +247,34 @@ export const Time: Type<Date> = {
 		buf.putUi8(Tag.Ext8);
 		buf.putUi8(12);
 		buf.putI8(-1);
-		buf.putUi32((ms%1000)*1000000);
-		buf.putI64(ms/1000);
+		buf.putUi32((ms % 1000) * 1000000);
+		buf.putI64(ms / 1000);
 	},
 
 	dec(buf: ReadBuffer): Date {
 		const tag = buf.getUi8();
-		switch(tag) {
-		case Tag.FixExt4: // 32-bit seconds
-			if(buf.getI8() === -1) {
-				return new Date(buf.getUi32() * 1000);
-			}
-			break;
-		case Tag.FixExt8: // 34-bit seconds + 30-bit nanoseconds
-			if(buf.getI8() === -1) {
-				const lo = buf.getUi32();
-				const hi = buf.getUi32();
-				// seconds: hi + (lo&0x3)*0x100000000
-				// nanoseconds: lo>>2 == lo/4
-				return new Date((hi + (lo&0x3)*0x100000000)*1000 + lo/4000000);
-			}
-			break;
-		case Tag.Ext8: // 64-bit seconds + 32-bit nanoseconds
-			if(buf.getUi8() === 12 && buf.getI8() === -1) {
-				const ns = buf.getUi32();
-				const s = buf.getI64();
-				return new Date(s*1000 + ns/1000000);
-			}
-			break;
+		switch (tag) {
+			case Tag.FixExt4: // 32-bit seconds
+				if (buf.getI8() === -1) {
+					return new Date(buf.getUi32() * 1000);
+				}
+				break;
+			case Tag.FixExt8: // 34-bit seconds + 30-bit nanoseconds
+				if (buf.getI8() === -1) {
+					const lo = buf.getUi32();
+					const hi = buf.getUi32();
+					// seconds: hi + (lo&0x3)*0x100000000
+					// nanoseconds: lo>>2 == lo/4
+					return new Date((hi + (lo & 0x3) * 0x100000000) * 1000 + lo / 4000000);
+				}
+				break;
+			case Tag.Ext8: // 64-bit seconds + 32-bit nanoseconds
+				if (buf.getUi8() === 12 && buf.getI8() === -1) {
+					const ns = buf.getUi32();
+					const s = buf.getI64();
+					return new Date(s * 1000 + ns / 1000000);
+				}
+				break;
 		}
 		typeError(tag, "time");
 	},
@@ -297,7 +297,7 @@ export function TypedArr<T>(valueT: Type<T>): Collection<T[]> {
 
 		dec(buf: ReadBuffer): T[] {
 			const res = [];
-			for(let n = getArrHeader(buf); n > 0; --n) {
+			for (let n = getArrHeader(buf); n > 0; --n) {
 				res.push(valueT.dec(buf));
 			}
 			return res;
@@ -306,7 +306,7 @@ export function TypedArr<T>(valueT: Type<T>): Collection<T[]> {
 }
 
 
-export function TypedMap<V>(keyT: Type<number|string>, valueT: Type<V>): Collection<Obj<V>> {
+export function TypedMap<V>(keyT: Type<number | string>, valueT: Type<V>): Collection<Obj<V>> {
 	return {
 		encHeader: putMapHeader,
 		decHeader: getMapHeader,
@@ -322,7 +322,7 @@ export function TypedMap<V>(keyT: Type<number|string>, valueT: Type<V>): Collect
 
 		dec(buf: ReadBuffer): Obj<V> {
 			const res = {};
-			for(let n = getMapHeader(buf); n > 0; --n) {
+			for (let n = getMapHeader(buf); n > 0; --n) {
 				const k = keyT.dec(buf);
 				res[k] = valueT.dec(buf);
 			}
@@ -348,9 +348,9 @@ export function structEncoder(fields: Fields): EncodeFunc<any> {
 export function structDecoder(fields: Fields): DecodeFunc<any> {
 	return (buf: ReadBuffer): any => {
 		const res = {};
-		for(let n = getMapHeader(buf); n > 0; --n) {
+		for (let n = getMapHeader(buf); n > 0; --n) {
 			const f = fields[Int.dec(buf)];
-			if(f) {
+			if (f) {
 				res[f[0]] = f[1].dec(buf);
 			} else {
 				Any.dec(buf);
@@ -383,7 +383,7 @@ export function unionDecoder(branches: Branches): DecodeFunc<any> {
 		getArrHeader(buf, 2);
 
 		const t = branches[Int.dec(buf)];
-		if(!t) {
+		if (!t) {
 			throw new TypeError("invalid union type");
 		}
 		return t.dec(buf);
@@ -400,28 +400,28 @@ export function Union(branches: Branches): Type<any> {
 
 function toUTF8(v: string): ArrayBuffer {
 	const n = v.length;
-	const bin = new Uint8Array(4*n);
+	const bin = new Uint8Array(4 * n);
 
 	let pos = 0, i = 0, c: number;
-	while(i < n) {
+	while (i < n) {
 		c = v.charCodeAt(i++);
-		if((c & 0xfc00) === 0xd800) {
-			c = (c<<10) + v.charCodeAt(i++) - 0x35fdc00;
+		if ((c & 0xfc00) === 0xd800) {
+			c = (c << 10) + v.charCodeAt(i++) - 0x35fdc00;
 		}
 
-		if(c < 0x80) {
+		if (c < 0x80) {
 			bin[pos++] = c;
-		} else if(c < 0x800) {
+		} else if (c < 0x800) {
 			bin[pos++] = 0xc0 + (c >> 6);
 			bin[pos++] = 0x80 + (c & 0x3f);
-		} else if(c < 0x10000) {
+		} else if (c < 0x10000) {
 			bin[pos++] = 0xe0 + (c >> 12);
-			bin[pos++] = 0x80 + ((c>>6) & 0x3f);
+			bin[pos++] = 0x80 + ((c >> 6) & 0x3f);
 			bin[pos++] = 0x80 + (c & 0x3f);
 		} else {
 			bin[pos++] = 0xf0 + (c >> 18);
-			bin[pos++] = 0x80 + ((c>>12) & 0x3f);
-			bin[pos++] = 0x80 + ((c>>6) & 0x3f);
+			bin[pos++] = 0x80 + ((c >> 12) & 0x3f);
+			bin[pos++] = 0x80 + ((c >> 6) & 0x3f);
 			bin[pos++] = 0x80 + (c & 0x3f);
 		}
 	}
@@ -433,79 +433,79 @@ function fromUTF8(buf: ArrayBuffer): string {
 }
 
 function typeOf(v: any): Type<any> {
-	switch(typeof v) {
-	case "undefined":
-		return Nil;
-	case "boolean":
-		return Bool;
-	case "number":
-		return !isFinite(v) || Math.floor(v) !== v ? Float
-			: v < 0 ? Int
-			: Uint;
-	case "string":
-		return Str;
-	case "object":
-		return v === null ? Nil
-			: Array.isArray(v) ? Arr
-			: v instanceof Uint8Array || v instanceof ArrayBuffer ? Bytes
-			: v instanceof Date ? Time
-			: Map;
-	default:
-		throw new TypeError(`unsupported type ${typeof v}`);
+	switch (typeof v) {
+		case "undefined":
+			return Nil;
+		case "boolean":
+			return Bool;
+		case "number":
+			return !isFinite(v) || Math.floor(v) !== v ? Float
+				: v < 0 ? Int
+					: Uint;
+		case "string":
+			return Str;
+		case "object":
+			return v === null ? Nil
+				: Array.isArray(v) ? Arr
+					: v instanceof Uint8Array || v instanceof ArrayBuffer ? Bytes
+						: v instanceof Date ? Time
+							: Map;
+		default:
+			throw new TypeError(`unsupported type ${typeof v}`);
 	}
 }
 
 function tagType(tag: Tag): Type<any> {
-	switch(tag) {
-	case Tag.Nil:
-		return Nil;
-	case Tag.False:
-	case Tag.True:
-		return Bool;
-	case Tag.Int8:
-	case Tag.Int16:
-	case Tag.Int32:
-	case Tag.Int64:
-		return Int;
-	case Tag.Uint8:
-	case Tag.Uint16:
-	case Tag.Uint32:
-	case Tag.Uint64:
-		return Uint;
-	case Tag.Float32:
-	case Tag.Float64:
-		return Float;
-	case Tag.Bin8:
-	case Tag.Bin16:
-	case Tag.Bin32:
-		return Bytes;
-	case Tag.Str8:
-	case Tag.Str16:
-	case Tag.Str32:
-		return Str;
-	case Tag.Array16:
-	case Tag.Array32:
-		return Arr;
-	case Tag.Map16:
-	case Tag.Map32:
-		return Map;
-	case Tag.FixExt4:
-	case Tag.FixExt8:
-	case Tag.Ext8:
-		return Time;
-	default:
-		if(isPosFixintTag(tag) || isNegFixintTag(tag)) {
+	switch (tag) {
+		case Tag.Nil:
+			return Nil;
+		case Tag.False:
+		case Tag.True:
+			return Bool;
+		case Tag.Int8:
+		case Tag.Int16:
+		case Tag.Int32:
+		case Tag.Int64:
 			return Int;
-		}
-		if(isFixstrTag(tag)) {
+		case Tag.Uint8:
+		case Tag.Uint16:
+		case Tag.Uint32:
+		case Tag.Uint64:
+			return Uint;
+		case Tag.Float32:
+		case Tag.Float64:
+			return Float;
+		case Tag.Bin8:
+		case Tag.Bin16:
+		case Tag.Bin32:
+			return Bytes;
+		case Tag.Str8:
+		case Tag.Str16:
+		case Tag.Str32:
 			return Str;
-		}
-		if(isFixarrayTag(tag)) {
+		case Tag.Array16:
+		case Tag.Array32:
 			return Arr;
-		}
-		if(isFixmapTag(tag)) {
+		case Tag.Map16:
+		case Tag.Map32:
 			return Map;
-		}
-		throw new TypeError(`unsupported tag ${tag}`);
+		case Tag.FixExt4:
+		case Tag.FixExt8:
+		case Tag.Ext8:
+			return Time;
+		default:
+			if (isPosFixintTag(tag) || isNegFixintTag(tag)) {
+				return Int;
+			}
+			if (isFixstrTag(tag)) {
+				return Str;
+			}
+			if (isFixarrayTag(tag)) {
+				return Arr;
+			}
+			if (isFixmapTag(tag)) {
+				return Map;
+			}
+			throw new TypeError(`unsupported tag ${tag}`);
 	}
 }
