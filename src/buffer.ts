@@ -7,7 +7,6 @@ import {
 	isFixstrTag, readFixstr,
 } from "./tags.ts";
 
-
 export interface WriteBuffer {
 	put(v: BufferSource): void;
 
@@ -43,8 +42,6 @@ export interface ReadBuffer {
 	getF32(): number;
 	getF64(): number;
 }
-
-
 
 export function createWriteBuffer(): WriteBuffer {
 	let view = new DataView(new ArrayBuffer(64));
@@ -139,9 +136,8 @@ export function createWriteBuffer(): WriteBuffer {
 	};
 }
 
-
 export function createReadBuffer(buf: BufferSource): ReadBuffer {
-	let view = ArrayBuffer.isView(buf) ? new DataView(buf.buffer, buf.byteOffset, buf.byteLength) : new DataView(buf);
+	const view = ArrayBuffer.isView(buf) ? new DataView(buf.buffer, buf.byteOffset, buf.byteLength) : new DataView(buf);
 	let n = 0;
 
 	return {
@@ -209,7 +205,6 @@ export function createReadBuffer(buf: BufferSource): ReadBuffer {
 	};
 }
 
-
 export function putBlob(buf: WriteBuffer, blob: ArrayBuffer, baseTag: Tag): void {
 	const n = blob.byteLength;
 	if (n <= 255) {
@@ -226,7 +221,6 @@ export function putBlob(buf: WriteBuffer, blob: ArrayBuffer, baseTag: Tag): void
 	}
 	buf.put(blob);
 }
-
 
 export function getBlob(buf: ReadBuffer): ArrayBuffer {
 	const tag = buf.getUi8();
@@ -256,7 +250,6 @@ export function getBlob(buf: ReadBuffer): ArrayBuffer {
 	return buf.get(n);
 }
 
-
 export function putArrHeader(buf: WriteBuffer, n: number): void {
 	if (n < 16) {
 		buf.putUi8(fixarrayTag(n));
@@ -264,7 +257,6 @@ export function putArrHeader(buf: WriteBuffer, n: number): void {
 		putCollectionHeader(buf, Tag.Array16, n);
 	}
 }
-
 
 export function getArrHeader(buf: ReadBuffer, expect?: number): number {
 	const tag = buf.getUi8();
@@ -277,7 +269,6 @@ export function getArrHeader(buf: ReadBuffer, expect?: number): number {
 	return n;
 }
 
-
 export function putMapHeader(buf: WriteBuffer, n: number): void {
 	if (n < 16) {
 		buf.putUi8(fixmapTag(n));
@@ -285,7 +276,6 @@ export function putMapHeader(buf: WriteBuffer, n: number): void {
 		putCollectionHeader(buf, Tag.Map16, n);
 	}
 }
-
 
 export function getMapHeader(buf: ReadBuffer, expect?: number): number {
 	const tag = buf.getUi8();
@@ -297,7 +287,6 @@ export function getMapHeader(buf: ReadBuffer, expect?: number): number {
 	}
 	return n;
 }
-
 
 function putCollectionHeader(buf: WriteBuffer, baseTag: Tag, n: number): void {
 	if (n <= 65535) {
@@ -323,7 +312,6 @@ function getCollectionHeader(buf: ReadBuffer, tag: Tag, baseTag: Tag, typename: 
 			typeError(tag, typename);
 	}
 }
-
 
 export function getRaw(buf: ReadBuffer, res: WriteBuffer): void {
 	let n;

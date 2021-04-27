@@ -333,7 +333,7 @@ Deno.test("encode", () => {
 	for (let i = 0; i < tests.length; ++i) {
 		const test = tests[i];
 		try {
-			const bin = encode(test.val, test.typ);
+			const bin = encode(test.val, test.typ as any);
 			const expected = new Uint8Array(test.bin);
 			if (!bufEqual(bin, expected)) {
 				throw new Error(`unexpected encoding at ${i} for '${test.val}': ${fmtBuf(bin)}, expected ${fmtBuf(expected)}`);

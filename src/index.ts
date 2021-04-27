@@ -26,5 +26,5 @@ function encode<T>(v: T, typ?: Type<T>): Uint8Array {
 }
 
 function decode<T>(buf: BufferSource, typ?: Type<T>): T {
-	return (typ || Any).dec(createReadBuffer(buf));
+	return (typ || Any).dec(createReadBuffer(buf)) as T;
 }

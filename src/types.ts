@@ -14,7 +14,6 @@ import {
 } from "./tags.ts";
 
 
-
 export type EncodeFunc<T> = (buf: WriteBuffer, v: T) => void;
 export type DecodeFunc<T> = (buf: ReadBuffer) => T;
 
@@ -31,28 +30,27 @@ export interface Collection<T> extends Type<T> {
 export type Obj<T> = { [key: string]: T };
 
 export type Field = [string, Type<any>]; // (name, type)
-export type Fields = { readonly [ordinal: string]: Field };
+export type Fields = { readonly [ordinal: number]: Field };
+
+export type TypeKnown = Type<null> | Type<boolean> | Type<number> | Type<string> | Type<ArrayBuffer> | Type<Date> | Collection<Obj<unknown>> | Collection<unknown[]>;
 
 export interface Branches {
 	readonly [ordinal: number]: Type<any>;
-	ordinalOf(v: any): number;
-};
+	ordinalOf(v: unknown): number;
+}
 
-
-
-export const Any: Type<any> = {
-	enc(buf: WriteBuffer, v: any): void {
-		typeOf(v).enc(buf, v);
+export const Any: Type<unknown> = {
+	enc(buf: WriteBuffer, v: unknown): void {
+		(typeOf(v) as Type<unknown>).enc(buf, v);
 	},
 
-	dec(buf: ReadBuffer): any {
+	dec(buf: ReadBuffer): unknown {
 		return tagType(buf.peek()).dec(buf);
 	},
 };
 
-
 export const Nil: Type<null> = {
-	enc(buf: WriteBuffer, v: null): void {
+	enc(buf: WriteBuffer, _: null): void {
 		buf.putUi8(Tag.Nil);
 	},
 
@@ -64,7 +62,6 @@ export const Nil: Type<null> = {
 		return null;
 	},
 };
-
 
 export const Bool: Type<boolean> = {
 	enc(buf: WriteBuffer, v: boolean): void {
@@ -84,7 +81,6 @@ export const Bool: Type<boolean> = {
 		}
 	},
 };
-
 
 export const Int: Type<number> = {
 	enc(buf: WriteBuffer, v: number): void {
@@ -147,7 +143,6 @@ export const Int: Type<number> = {
 	},
 };
 
-
 export const Uint: Type<number> = {
 	enc(buf: WriteBuffer, v: number): void {
 		if (v < 0) {
@@ -178,7 +173,6 @@ export const Uint: Type<number> = {
 	},
 };
 
-
 export const Float: Type<number> = {
 	enc(buf: WriteBuffer, v: number): void {
 		buf.putUi8(Tag.Float64);
@@ -200,7 +194,6 @@ export const Float: Type<number> = {
 	},
 };
 
-
 export const Bytes: Type<ArrayBuffer> = {
 	enc(buf: WriteBuffer, v: ArrayBuffer): void {
 		putBlob(buf, v, Tag.Bin8);
@@ -209,10 +202,9 @@ export const Bytes: Type<ArrayBuffer> = {
 	dec: getBlob,
 };
 
-
 export const Str: Type<string> = {
 	enc(buf: WriteBuffer, v: string): void {
-		const utf8 = toUTF8(v);
+		const utf8 = toUTF8(v); //TODO use TextEncoder
 		if (utf8.byteLength < 32) {
 			buf.putUi8(fixstrTag(utf8.byteLength));
 			buf.put(utf8);
@@ -222,10 +214,9 @@ export const Str: Type<string> = {
 	},
 
 	dec(buf: ReadBuffer): string {
-		return fromUTF8(getBlob(buf));
+		return fromUTF8(getBlob(buf)); //TODO use TextEncoder
 	},
 };
-
 
 export const Raw: Type<ArrayBuffer> = {
 	enc(buf: WriteBuffer, v: ArrayBuffer): void {
@@ -239,7 +230,6 @@ export const Raw: Type<ArrayBuffer> = {
 		return arr.buffer.slice(0, arr.length);
 	},
 };
-
 
 export const Time: Type<Date> = {
 	enc(buf: WriteBuffer, v: Date): void {
@@ -280,10 +270,8 @@ export const Time: Type<Date> = {
 	},
 };
 
-
 export const Arr = TypedArr(Any);
-export const Map = TypedMap(Any, Any);
-
+export const Map = TypedMap(Any as Type<number | string>, Any);
 
 export function TypedArr<T>(valueT: Type<T>): Collection<T[]> {
 	return {
@@ -304,7 +292,6 @@ export function TypedArr<T>(valueT: Type<T>): Collection<T[]> {
 		},
 	};
 }
-
 
 export function TypedMap<V>(keyT: Type<number | string>, valueT: Type<V>): Collection<Obj<V>> {
 	return {
@@ -331,23 +318,22 @@ export function TypedMap<V>(keyT: Type<number | string>, valueT: Type<V>): Colle
 	};
 }
 
-
-export function structEncoder(fields: Fields): EncodeFunc<any> {
+export function structEncoder(fields: Fields): EncodeFunc<Obj<unknown>> {
 	const ordinals = Object.keys(fields);
 
-	return (buf: WriteBuffer, v: any): void => {
+	return (buf: WriteBuffer, v: Obj<unknown>): void => {
 		putMapHeader(buf, ordinals.length);
 		ordinals.forEach(ord => {
-			const f = fields[ord];
+			const f = fields[ord as unknown as number];
 			Int.enc(buf, Number(ord));
 			f[1].enc(buf, v[f[0]]);
 		});
 	};
 }
 
-export function structDecoder(fields: Fields): DecodeFunc<any> {
-	return (buf: ReadBuffer): any => {
-		const res: { [key: string]: any } = {};
+export function structDecoder(fields: Fields): DecodeFunc<Obj<unknown>> {
+	return (buf: ReadBuffer): Obj<unknown> => {
+		const res: { [key: string]: unknown } = {};
 		for (let n = getMapHeader(buf); n > 0; --n) {
 			const f = fields[Int.dec(buf)];
 			if (f) {
@@ -360,16 +346,15 @@ export function structDecoder(fields: Fields): DecodeFunc<any> {
 	};
 }
 
-export function Struct(fields: Fields): Type<Obj<any>> {
+export function Struct(fields: Fields): Type<Obj<unknown>> {
 	return {
 		enc: structEncoder(fields),
 		dec: structDecoder(fields),
 	};
 }
 
-
-export function unionEncoder(branches: Branches): EncodeFunc<any> {
-	return (buf: WriteBuffer, v: any): void => {
+export function unionEncoder(branches: Branches): EncodeFunc<unknown> {
+	return (buf: WriteBuffer, v: unknown): void => {
 		putArrHeader(buf, 2);
 
 		const ord = branches.ordinalOf(v);
@@ -378,8 +363,8 @@ export function unionEncoder(branches: Branches): EncodeFunc<any> {
 	};
 }
 
-export function unionDecoder(branches: Branches): DecodeFunc<any> {
-	return (buf: ReadBuffer): any => {
+export function unionDecoder(branches: Branches): DecodeFunc<unknown> {
+	return (buf: ReadBuffer): unknown => {
 		getArrHeader(buf, 2);
 
 		const t = branches[Int.dec(buf)];
@@ -390,7 +375,7 @@ export function unionDecoder(branches: Branches): DecodeFunc<any> {
 	};
 }
 
-export function Union(branches: Branches): Type<any> {
+export function Union(branches: Branches): Type<unknown> {
 	return {
 		enc: unionEncoder(branches),
 		dec: unionDecoder(branches),
@@ -432,7 +417,7 @@ function fromUTF8(buf: ArrayBuffer): string {
 	return (new TextDecoder("utf-8")).decode(buf);
 }
 
-function typeOf(v: any): Type<any> {
+function typeOf(v: unknown): TypeKnown {
 	switch (typeof v) {
 		case "undefined":
 			return Nil;
@@ -455,7 +440,7 @@ function typeOf(v: any): Type<any> {
 	}
 }
 
-function tagType(tag: Tag): Type<any> {
+function tagType(tag: Tag): TypeKnown {
 	switch (tag) {
 		case Tag.Nil:
 			return Nil;
