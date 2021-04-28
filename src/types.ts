@@ -29,12 +29,14 @@ export interface Collection<T> extends Type<T> {
 
 export type Obj<T> = { [key: string]: T };
 
+// deno-lint-ignore no-explicit-any
 export type Field = [string, Type<any>]; // (name, type)
 export type Fields = { readonly [ordinal: number]: Field };
 
 export type TypeKnown = Type<null> | Type<boolean> | Type<number> | Type<string> | Type<ArrayBuffer> | Type<Date> | Collection<Obj<unknown>> | Collection<unknown[]>;
 
 export interface Branches {
+	// deno-lint-ignore no-explicit-any
 	readonly [ordinal: number]: Type<any>;
 	ordinalOf(v: unknown): number;
 }

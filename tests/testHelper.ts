@@ -1,6 +1,6 @@
 
 export function repeat<T>(x: T, n: number): T[] {
-    let res = [];
+    const res = [];
     for (let i = 0; i < n; ++i) {
         res.push(x);
     }
@@ -20,19 +20,20 @@ export function fmtBuf(buf: Uint8Array): string {
     return `[${list}]`;
 }
 
-export function opEqual(test: any): (x: any, y: any) => boolean {
+// deno-lint-ignore no-explicit-any
+export function opEqual(test: { eq?: (x: any, y: any) => boolean }): (x: unknown, y: unknown) => boolean {
     if (test.eq) {
         return test.eq;
     }
     return (x, y) => x === y;
 }
 
-export function arrayEqual(x: any[], y: any[]): boolean {
+export function arrayEqual(x: unknown[], y: unknown[]): boolean {
     return x.length === y.length
         && x.every((v, i) => v === y[i]);
 }
 
-export function objectEqual(x: any, y: any): boolean {
+export function objectEqual(x: Record<string, unknown>, y: Record<string, unknown>): boolean {
     for (const p in x) {
         if (!(p in y) || x[p] !== y[p]) {
             return false;

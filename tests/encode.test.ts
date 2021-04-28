@@ -315,7 +315,7 @@ Deno.test("encode", () => {
 			typ: Union({
 				4: Int,
 				6: Str,
-				ordinalOf(v: any): number { return 4; },
+				ordinalOf(_: unknown): number { return 4; },
 			}),
 			bin: [fixarrayTag(2), posFixintTag(4), posFixintTag(7)],
 		},
@@ -324,7 +324,7 @@ Deno.test("encode", () => {
 			typ: Union({
 				13: Str,
 				14: Int,
-				ordinalOf(v: any): number { return 13; },
+				ordinalOf(_: unknown): number { return 13; },
 			}),
 			bin: [fixarrayTag(2), posFixintTag(13), fixstrTag(1), 0x37],
 		},
@@ -333,6 +333,7 @@ Deno.test("encode", () => {
 	for (let i = 0; i < tests.length; ++i) {
 		const test = tests[i];
 		try {
+			// deno-lint-ignore no-explicit-any
 			const bin = encode<any>(test.val, test.typ);
 			const expected = new Uint8Array(test.bin);
 			if (!bufEqual(bin, expected)) {
