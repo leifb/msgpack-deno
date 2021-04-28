@@ -2,11 +2,11 @@ import {
 	Type, Collection, Obj,
 	Nil, Bool, Int, Uint, Float, Bytes, Str, TypedArr, TypedMap, Time, Any, Arr, Map, Struct, Union,
 	structEncoder, structDecoder, unionEncoder, unionDecoder,
-} from "./types.ts";
+} from "./src/types.ts";
 import {
 	WriteBuffer, ReadBuffer,
 	createWriteBuffer, createReadBuffer,
-} from "./buffer.ts";
+} from "./src/buffer.ts";
 
 export type {
 	WriteBuffer, ReadBuffer,
