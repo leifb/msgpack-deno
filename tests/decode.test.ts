@@ -650,7 +650,7 @@ Deno.test("decode", () => {
 		const test = tests[i];
 		const bin = new Uint8Array(test.bin);
 		try {
-			const val = decode(bin, test.typ as any);
+			const val = decode<any>(bin, test.typ);
 			const eq = opEqual(test);
 			if (!eq(val, test.val)) {
 				throw new Error(`unexpected decoding at ${i} for '${fmtBuf(bin)}': ${val}, expected ${test.val}`);

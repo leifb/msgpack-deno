@@ -21,10 +21,10 @@ export {
 
 function encode<T>(v: T, typ?: Type<T>): Uint8Array {
 	const buf = createWriteBuffer();
-	(typ || Any).enc(buf, v);
+	(typ ?? Any).enc(buf, v);
 	return buf.ui8array();
 }
 
 function decode<T>(buf: BufferSource, typ?: Type<T>): T {
-	return (typ || Any).dec(createReadBuffer(buf)) as T;
+	return (typ ?? Any).dec(createReadBuffer(buf)) as T;
 }
