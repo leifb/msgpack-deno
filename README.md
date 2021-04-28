@@ -1,7 +1,11 @@
+
 # msgpack-deno
 
-`msgpack-deno` is a [MessagePack](http://msgpack.org/) implementation for the deno runtime in TypeScript. It has been forked and adapted to work with deno from [mprot/msgpack-js](https://github.com/mprot/msgpack-js).
+A [MessagePack](http://msgpack.org/) implementation for the deno runtime in TypeScript. It has been forked and adapted to work with deno from [mprot/msgpack-js](https://github.com/mprot/msgpack-js).
 Changes are mostly limited to types and imports, the actual implementation of the encoding and decoding is still the same.
+## Alternative
+
+You should consider using [deno.land/x/msgpack](https://deno.land/x/msgpack) / [ Srinivasa314/msgpack-deno](https://github.com/Srinivasa314/msgpack-deno) instead. I did not realize there was an existing and working version that is also being maintained. From doing some quick tests, the other version seems to be about 10 times faster. I am still going to leave this version here and will fix bugs if the appear.
 
 ## Encoding
 
